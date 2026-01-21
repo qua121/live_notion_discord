@@ -1,0 +1,16 @@
+{
+  "check_interval": 60,
+  "channels": [
+    {
+      "id": "UCxxxxxxxxxxxxxxxxxxxxxx",
+      "name": "配信者名",
+      "mention": "@everyone"
+    }
+  ],
+  "notification": {
+    "show_thumbnail": true,
+    "color": 16711680,
+    "include_end_notification": false
+  },
+  "log_level": "INFO"
+}
