@@ -23,7 +23,7 @@ class Settings:
     log_level: str
 
     @classmethod
-    def load(cls, config_path: str = 'config/config.json') -> 'Settings':
+    def load(cls, config_path: str = "config/config.json") -> "Settings":
         """
         設定ファイルと環境変数から設定を読み込む
 
@@ -37,11 +37,11 @@ class Settings:
             ValueError: 設定が不正な場合
         """
         # .envファイル読み込み
-        load_dotenv('config/.env')
+        load_dotenv("config/.env")
 
         # 環境変数取得
-        youtube_api_key = os.getenv('YOUTUBE_API_KEY')
-        discord_webhook_url = os.getenv('DISCORD_WEBHOOK_URL')
+        youtube_api_key = os.getenv("YOUTUBE_API_KEY")
+        discord_webhook_url = os.getenv("DISCORD_WEBHOOK_URL")
 
         if not youtube_api_key:
             raise ValueError("YOUTUBE_API_KEY が設定されていません")
@@ -57,17 +57,13 @@ class Settings:
                 f"コマンド: cp config/config.json.example config/config.json"
             )
 
-        with open(config_file, 'r', encoding='utf-8') as f:
+        with open(config_file, "r", encoding="utf-8") as f:
             config_data = json.load(f)
 
         # チャンネルリスト作成
         channels = [
-            Channel(
-                id=ChannelId(ch['id']),
-                name=ch['name'],
-                mention=ch.get('mention', '@everyone')
-            )
-            for ch in config_data['channels']
+            Channel(id=ChannelId(ch["id"]), name=ch["name"], mention=ch.get("mention", "@everyone"))
+            for ch in config_data["channels"]
         ]
 
         if not channels:
@@ -76,8 +72,8 @@ class Settings:
         return cls(
             youtube_api_key=youtube_api_key,
             discord_webhook_url=discord_webhook_url,
-            check_interval=config_data.get('check_interval', 60),
+            check_interval=config_data.get("check_interval", 60),
             channels=channels,
-            notification_color=config_data.get('notification', {}).get('color', 16711680),
-            log_level=config_data.get('log_level', 'INFO')
+            notification_color=config_data.get("notification", {}).get("color", 16711680),
+            log_level=config_data.get("log_level", "INFO"),
         )

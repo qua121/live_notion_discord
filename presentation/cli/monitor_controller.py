@@ -18,10 +18,7 @@ class MonitorController:
     """監視を制御するCLIコントローラー"""
 
     def __init__(
-        self,
-        use_case: MonitorStreamsUseCase,
-        channels: List[Channel],
-        check_interval: int
+        self, use_case: MonitorStreamsUseCase, channels: List[Channel], check_interval: int
     ):
         """
         Args:

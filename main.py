@@ -29,20 +29,19 @@ def main():
     """メイン処理"""
     try:
         # 1. 設定読み込み
-        settings = Settings.load('config/config.json')
+        settings = Settings.load("config/config.json")
 
         # 2. ロギング設定
-        setup_logging(settings.log_level, 'logs/monitor.log')
+        setup_logging(settings.log_level, "logs/monitor.log")
 
         logger.info("YouTube配信監視システムを起動します")
 
         # 3. Infrastructure層のインスタンス生成（具象実装）
         stream_repository = YouTubeStreamRepository(settings.youtube_api_key)
         notification_gateway = DiscordNotificationGateway(
-            settings.discord_webhook_url,
-            settings.notification_color
+            settings.discord_webhook_url, settings.notification_color
         )
-        state_repository = JsonStateRepository('data/state.json')
+        state_repository = JsonStateRepository("data/state.json")
 
         # 4. Application層のサービス生成
         change_detector = StreamChangeDetector()
@@ -50,17 +49,15 @@ def main():
         # 5. Use Case生成（依存性注入）
         # ポイント: Use Caseは抽象（インターフェース）のみを知っている
         use_case = MonitorStreamsUseCase(
-            stream_repository=stream_repository,        # StreamRepository型として注入
+            stream_repository=stream_repository,  # StreamRepository型として注入
             notification_gateway=notification_gateway,  # NotificationGateway型として注入
-            state_repository=state_repository,          # StateRepository型として注入
-            change_detector=change_detector
+            state_repository=state_repository,  # StateRepository型として注入
+            change_detector=change_detector,
         )
 
         # 6. Presentation層（Controller）生成
         controller = MonitorController(
-            use_case=use_case,
-            channels=settings.channels,
-            check_interval=settings.check_interval
+            use_case=use_case, channels=settings.channels, check_interval=settings.check_interval
         )
 
         # 7. 監視開始
@@ -85,5 +82,5 @@ def main():
     return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     exit(main())

@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 
 class NotificationError(Exception):
     """通知送信エラー"""
+
     pass
 
 
@@ -40,21 +41,16 @@ class DiscordNotificationGateway(NotificationGateway):
         """
         try:
             embed = self._create_embed(channel, stream)
-            payload = {
-                'content': channel.mention,  # メンション
-                'embeds': [embed]
-            }
+            payload = {"content": channel.mention, "embeds": [embed]}  # メンション
 
-            response = requests.post(
-                self._webhook_url,
-                json=payload,
-                timeout=10
-            )
+            response = requests.post(self._webhook_url, json=payload, timeout=10)
 
             if response.status_code == 204:
                 logger.info(f"Discord通知送信成功: {channel.name}")
             else:
-                logger.warning(f"Discord通知送信失敗: status={response.status_code}, body={response.text}")
+                logger.warning(
+                    f"Discord通知送信失敗: status={response.status_code}, body={response.text}"
+                )
                 raise NotificationError(f"Discord API エラー: {response.status_code}")
 
         except requests.RequestException as e:
@@ -64,15 +60,11 @@ class DiscordNotificationGateway(NotificationGateway):
     def _create_embed(self, channel: Channel, stream: Stream) -> dict:
         """埋め込み（Embed）を作成"""
         return {
-            'title': f'🔴 {channel.name} が配信を開始しました!',
-            'description': stream.title,
-            'url': f'https://www.youtube.com/watch?v={stream.video_id}',
-            'color': self._color,
-            'image': {
-                'url': stream.thumbnail_url
-            },
-            'timestamp': datetime.utcnow().isoformat(),
-            'footer': {
-                'text': 'YouTube Live'
-            }
+            "title": f"🔴 {channel.name} が配信を開始しました!",
+            "description": stream.title,
+            "url": f"https://www.youtube.com/watch?v={stream.video_id}",
+            "color": self._color,
+            "image": {"url": stream.thumbnail_url},
+            "timestamp": datetime.utcnow().isoformat(),
+            "footer": {"text": "YouTube Live"},
         }

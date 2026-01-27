@@ -46,9 +46,7 @@ class TestChannel:
     def test_create_channel(self):
         """正常にChannelを作成できる"""
         channel = Channel(
-            id=ChannelId("UC1234567890123456789012"),
-            name="テストチャンネル",
-            mention="@everyone"
+            id=ChannelId("UC1234567890123456789012"), name="テストチャンネル", mention="@everyone"
         )
         assert channel.name == "テストチャンネル"
         assert channel.mention == "@everyone"
@@ -56,11 +54,7 @@ class TestChannel:
     def test_channel_empty_name(self):
         """チャンネル名が空の場合、ValueErrorが発生"""
         with pytest.raises(ValueError, match="チャンネル名は空にできません"):
-            Channel(
-                id=ChannelId("UC1234567890123456789012"),
-                name="",
-                mention="@everyone"
-            )
+            Channel(id=ChannelId("UC1234567890123456789012"), name="", mention="@everyone")
 
     def test_channel_equality(self):
         """同じIDのChannelは等しい"""
@@ -72,14 +66,10 @@ class TestChannel:
     def test_channel_inequality(self):
         """異なるIDのChannelは等しくない"""
         channel1 = Channel(
-            id=ChannelId("UC1234567890123456789012"),
-            name="チャンネル1",
-            mention="@everyone"
+            id=ChannelId("UC1234567890123456789012"), name="チャンネル1", mention="@everyone"
         )
         channel2 = Channel(
-            id=ChannelId("UC9876543210987654321098"),
-            name="チャンネル2",
-            mention="@everyone"
+            id=ChannelId("UC9876543210987654321098"), name="チャンネル2", mention="@everyone"
         )
         assert channel1 != channel2
 
@@ -94,7 +84,7 @@ class TestStream:
             title="テスト配信",
             thumbnail_url="http://example.com/thumb.jpg",
             started_at=datetime.now(),
-            status=StreamStatus.LIVE
+            status=StreamStatus.LIVE,
         )
         assert stream.video_id == "test123"
         assert stream.title == "テスト配信"
@@ -108,7 +98,7 @@ class TestStream:
                 title="テスト配信",
                 thumbnail_url="http://example.com/thumb.jpg",
                 started_at=datetime.now(),
-                status=StreamStatus.LIVE
+                status=StreamStatus.LIVE,
             )
 
     def test_stream_empty_title(self):
@@ -119,7 +109,7 @@ class TestStream:
                 title="",
                 thumbnail_url="http://example.com/thumb.jpg",
                 started_at=datetime.now(),
-                status=StreamStatus.LIVE
+                status=StreamStatus.LIVE,
             )
 
     def test_stream_is_live(self):
@@ -129,7 +119,7 @@ class TestStream:
             title="テスト配信",
             thumbnail_url="http://example.com/thumb.jpg",
             started_at=datetime.now(),
-            status=StreamStatus.LIVE
+            status=StreamStatus.LIVE,
         )
         assert stream.is_live() is True
 
@@ -140,7 +130,7 @@ class TestStream:
             title="テスト配信",
             thumbnail_url="http://example.com/thumb.jpg",
             started_at=datetime.now(),
-            status=StreamStatus.ENDED
+            status=StreamStatus.ENDED,
         )
         assert stream.is_live() is False
 
@@ -151,14 +141,14 @@ class TestStream:
             title="タイトル1",
             thumbnail_url="http://example.com/thumb1.jpg",
             started_at=datetime.now(),
-            status=StreamStatus.LIVE
+            status=StreamStatus.LIVE,
         )
         stream2 = Stream(
             video_id="test123",
             title="タイトル2",
             thumbnail_url="http://example.com/thumb2.jpg",
             started_at=datetime.now(),
-            status=StreamStatus.LIVE
+            status=StreamStatus.LIVE,
         )
         assert stream1 == stream2
 
@@ -169,13 +159,13 @@ class TestStream:
             title="テスト配信",
             thumbnail_url="http://example.com/thumb.jpg",
             started_at=datetime.now(),
-            status=StreamStatus.LIVE
+            status=StreamStatus.LIVE,
         )
         stream2 = Stream(
             video_id="test456",
             title="テスト配信",
             thumbnail_url="http://example.com/thumb.jpg",
             started_at=datetime.now(),
-            status=StreamStatus.LIVE
+            status=StreamStatus.LIVE,
         )
         assert stream1 != stream2

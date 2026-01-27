@@ -15,9 +15,7 @@ class StreamChangeDetector:
     """配信状態の変化を検出するサービス"""
 
     def is_stream_started(
-        self,
-        previous_state: Optional[StreamStateDto],
-        current_stream: Optional[Stream]
+        self, previous_state: Optional[StreamStateDto], current_stream: Optional[Stream]
     ) -> bool:
         """
         配信が開始されたかどうかを判定
@@ -48,9 +46,7 @@ class StreamChangeDetector:
         return False
 
     def is_stream_ended(
-        self,
-        previous_state: Optional[StreamStateDto],
-        current_stream: Optional[Stream]
+        self, previous_state: Optional[StreamStateDto], current_stream: Optional[Stream]
     ) -> bool:
         """
         配信が終了したかどうかを判定

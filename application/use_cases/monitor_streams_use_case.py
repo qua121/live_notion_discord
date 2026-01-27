@@ -31,7 +31,7 @@ class MonitorStreamsUseCase:
         stream_repository: StreamRepository,
         notification_gateway: NotificationGateway,
         state_repository: StateRepository,
-        change_detector: StreamChangeDetector
+        change_detector: StreamChangeDetector,
     ):
         """
         依存性注入（すべて抽象インターフェースに依存）
@@ -84,7 +84,7 @@ class MonitorStreamsUseCase:
                 is_live=True,
                 video_id=current_stream.video_id,
                 last_checked=datetime.now(),
-                last_notified=datetime.now()
+                last_notified=datetime.now(),
             )
             self._state_repo.save_state(channel.id, new_state)
 
@@ -94,7 +94,7 @@ class MonitorStreamsUseCase:
                 is_live=True,
                 video_id=current_stream.video_id,
                 last_checked=datetime.now(),
-                last_notified=previous_state.last_notified
+                last_notified=previous_state.last_notified,
             )
             self._state_repo.save_state(channel.id, updated_state)
 
@@ -106,6 +106,6 @@ class MonitorStreamsUseCase:
                     is_live=False,
                     video_id=None,
                     last_checked=datetime.now(),
-                    last_notified=previous_state.last_notified if previous_state else None
+                    last_notified=previous_state.last_notified if previous_state else None,
                 )
                 self._state_repo.save_state(channel.id, offline_state)

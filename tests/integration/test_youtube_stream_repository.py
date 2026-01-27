@@ -23,8 +23,8 @@ pytestmark = pytest.mark.integration
 @pytest.fixture(scope="module")
 def api_key():
     """YouTube API キーをロード"""
-    load_dotenv('config/.env')
-    key = os.getenv('YOUTUBE_API_KEY')
+    load_dotenv("config/.env")
+    key = os.getenv("YOUTUBE_API_KEY")
     if not key:
         pytest.skip("YOUTUBE_API_KEY が設定されていません")
     return key
@@ -44,17 +44,13 @@ def test_channel():
     TEST_CHANNEL_ID: テスト対象のYouTubeチャンネルID
     TEST_CHANNEL_NAME: チャンネル名（任意）
     """
-    channel_id = os.getenv('TEST_CHANNEL_ID')
+    channel_id = os.getenv("TEST_CHANNEL_ID")
     if not channel_id:
         pytest.skip("TEST_CHANNEL_ID が設定されていません")
 
-    channel_name = os.getenv('TEST_CHANNEL_NAME', 'Test Channel')
+    channel_name = os.getenv("TEST_CHANNEL_NAME", "Test Channel")
 
-    return Channel(
-        id=ChannelId(channel_id),
-        name=channel_name,
-        mention='@test'
-    )
+    return Channel(id=ChannelId(channel_id), name=channel_name, mention="@test")
 
 
 class TestYouTubeStreamRepository:
@@ -65,9 +61,9 @@ class TestYouTubeStreamRepository:
         playlist_id = repository._get_uploads_playlist_id(str(test_channel.id))
 
         # UCから始まるチャンネルIDはUUに変換される
-        assert playlist_id.startswith('UU')
+        assert playlist_id.startswith("UU")
         # UC... → UU... に変換されていることを確認
-        expected_playlist_id = 'UU' + str(test_channel.id)[2:]
+        expected_playlist_id = "UU" + str(test_channel.id)[2:]
         assert playlist_id == expected_playlist_id
 
     def test_get_current_stream_実際のAPI呼び出し(self, repository, test_channel):
@@ -94,10 +90,10 @@ class TestYouTubeStreamRepository:
         channels = [test_channel]
 
         # 2つ目のチャンネルが設定されていれば追加
-        channel_id_2 = os.getenv('TEST_CHANNEL_ID_2')
+        channel_id_2 = os.getenv("TEST_CHANNEL_ID_2")
         if channel_id_2:
-            channel_name_2 = os.getenv('TEST_CHANNEL_NAME_2', 'Test Channel 2')
-            channels.append(Channel(ChannelId(channel_id_2), channel_name_2, '@test'))
+            channel_name_2 = os.getenv("TEST_CHANNEL_NAME_2", "Test Channel 2")
+            channels.append(Channel(ChannelId(channel_id_2), channel_name_2, "@test"))
 
         results = []
         for channel in channels:
@@ -112,11 +108,7 @@ class TestYouTubeStreamRepository:
         """存在しないチャンネルIDでのエラーハンドリング"""
         from infrastructure.youtube.youtube_stream_repository import RepositoryError
 
-        fake_channel = Channel(
-            ChannelId('UC0000000000000000000000'),
-            'Fake Channel',
-            '@test'
-        )
+        fake_channel = Channel(ChannelId("UC0000000000000000000000"), "Fake Channel", "@test")
 
         # リトライ後にエラーが発生すること
         with pytest.raises(RepositoryError):
@@ -129,7 +121,7 @@ class TestYouTubeStreamRepository:
         # UCで始まらないチャンネルIDを直接テスト
         # （ChannelIdバリデーションをバイパス）
         with pytest.raises(RepositoryError, match="非標準的なチャンネルID形式"):
-            repository._get_uploads_playlist_id('invalid-channel-id')
+            repository._get_uploads_playlist_id("invalid-channel-id")
 
     @pytest.mark.slow
     def test_api_quota_cost(self, repository, test_channel):
@@ -149,8 +141,10 @@ class TestYouTubeStreamRepository:
         print("コスト削減率: 98% (1/50)")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # 直接実行時のヘルプ
     print("統合テストの実行方法:")
-    print("pytest tests/integration/test_youtube_stream_repository.py -v -o addopts=\"\" -m integration")
+    print(
+        'pytest tests/integration/test_youtube_stream_repository.py -v -o addopts="" -m integration'
+    )
     print("\n注意: このテストは実際のYouTube APIを使用し、クォータを消費します")

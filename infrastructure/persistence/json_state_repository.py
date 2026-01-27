@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 
 class StateRepositoryError(Exception):
     """状態リポジトリエラー"""
+
     pass
 
 
@@ -54,7 +55,7 @@ class JsonStateRepository(StateRepository):
             return
 
         try:
-            with open(self._file_path, 'r', encoding='utf-8') as f:
+            with open(self._file_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
 
             self._state_cache = {
@@ -72,10 +73,7 @@ class JsonStateRepository(StateRepository):
         # ディレクトリが存在しない場合は作成
         self._file_path.parent.mkdir(parents=True, exist_ok=True)
 
-        data = {
-            channel_id: state.to_dict()
-            for channel_id, state in self._state_cache.items()
-        }
+        data = {channel_id: state.to_dict() for channel_id, state in self._state_cache.items()}
 
-        with open(self._file_path, 'w', encoding='utf-8') as f:
+        with open(self._file_path, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=2)

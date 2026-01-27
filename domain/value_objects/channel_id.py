@@ -14,7 +14,7 @@ class ChannelId:
     value: str
 
     # YouTubeチャンネルIDの形式: UCで始まる24文字
-    PATTERN = re.compile(r'^UC[a-zA-Z0-9_-]{22}$')
+    PATTERN = re.compile(r"^UC[a-zA-Z0-9_-]{22}$")
 
     def __post_init__(self):
         if not self.PATTERN.match(self.value):

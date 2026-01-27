@@ -5,7 +5,7 @@ from pathlib import Path
 from logging.handlers import RotatingFileHandler
 
 
-def setup_logging(log_level: str = 'INFO', log_file: str = 'logs/monitor.log') -> None:
+def setup_logging(log_level: str = "INFO", log_file: str = "logs/monitor.log") -> None:
     """
     ロギングを設定
 
@@ -22,8 +22,7 @@ def setup_logging(log_level: str = 'INFO', log_file: str = 'logs/monitor.log') -
 
     # フォーマッター
     formatter = logging.Formatter(
-        '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S'
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
     )
 
     # コンソールハンドラー
@@ -34,10 +33,7 @@ def setup_logging(log_level: str = 'INFO', log_file: str = 'logs/monitor.log') -
 
     # ファイルハンドラー（ローテーション付き）
     file_handler = RotatingFileHandler(
-        log_file,
-        maxBytes=10 * 1024 * 1024,  # 10MB
-        backupCount=5,
-        encoding='utf-8'
+        log_file, maxBytes=10 * 1024 * 1024, backupCount=5, encoding="utf-8"  # 10MB
     )
     file_handler.setLevel(logging.DEBUG)
     file_handler.setFormatter(formatter)

@@ -24,10 +24,11 @@ logger = logging.getLogger(__name__)
 
 class RepositoryError(Exception):
     """リポジトリエラー"""
+
     pass
 
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 class YouTubeStreamRepository(StreamRepository):
@@ -46,7 +47,7 @@ class YouTubeStreamRepository(StreamRepository):
             api_key: YouTube Data API v3のAPIキー
         """
         self._api_key = api_key
-        self._youtube = build('youtube', 'v3', developerKey=api_key)
+        self._youtube = build("youtube", "v3", developerKey=api_key)
 
     def _retry_on_error(self, func: Callable[[], T], operation_name: str) -> T:
         """
@@ -74,7 +75,7 @@ class YouTubeStreamRepository(StreamRepository):
 
                 # 500番台エラーはリトライ対象
                 last_error = e
-                wait_time = self.RETRY_BACKOFF_BASE ** attempt
+                wait_time = self.RETRY_BACKOFF_BASE**attempt
                 logger.warning(
                     f"{operation_name} 失敗 (試行 {attempt + 1}/{self.MAX_RETRIES}): {e}. "
                     f"{wait_time}秒後にリトライします..."
@@ -84,7 +85,7 @@ class YouTubeStreamRepository(StreamRepository):
             except Exception as e:
                 # その他の例外もリトライ対象
                 last_error = e
-                wait_time = self.RETRY_BACKOFF_BASE ** attempt
+                wait_time = self.RETRY_BACKOFF_BASE**attempt
                 logger.warning(
                     f"{operation_name} で予期しないエラー (試行 {attempt + 1}/{self.MAX_RETRIES}): {e}. "
                     f"{wait_time}秒後にリトライします..."
@@ -110,8 +111,8 @@ class YouTubeStreamRepository(StreamRepository):
         Returns:
             アップロードプレイリストID
         """
-        if channel_id.startswith('UC'):
-            return 'UU' + channel_id[2:]
+        if channel_id.startswith("UC"):
+            return "UU" + channel_id[2:]
         else:
             # 非標準的なチャンネルIDの場合はエラー
             raise RepositoryError(f"非標準的なチャンネルID形式: {channel_id}")
@@ -132,63 +133,62 @@ class YouTubeStreamRepository(StreamRepository):
             # Step 2: playlistItems.listで最新N件の動画IDを取得 (1 unit) - リトライ付き
             def fetch_playlist_items():
                 playlist_request = self._youtube.playlistItems().list(
-                    part='contentDetails',
+                    part="contentDetails",
                     playlistId=uploads_playlist_id,
-                    maxResults=self.MAX_RECENT_VIDEOS
+                    maxResults=self.MAX_RECENT_VIDEOS,
                 )
                 return playlist_request.execute()
 
             playlist_response = self._retry_on_error(
-                fetch_playlist_items,
-                f"playlistItems.list ({channel.name})"
+                fetch_playlist_items, f"playlistItems.list ({channel.name})"
             )
 
-            items = playlist_response.get('items', [])
+            items = playlist_response.get("items", [])
             if not items:
                 logger.debug(f"動画なし: {channel.name}")
                 return None
 
             # 動画IDのリストを作成
-            video_ids = [item['contentDetails']['videoId'] for item in items]
+            video_ids = [item["contentDetails"]["videoId"] for item in items]
 
             # Step 3: videos.listで一括取得 (1 unit) - リトライ付き
             def fetch_videos():
                 videos_request = self._youtube.videos().list(
-                    part='snippet,liveStreamingDetails',
-                    id=','.join(video_ids)
+                    part="snippet,liveStreamingDetails", id=",".join(video_ids)
                 )
                 return videos_request.execute()
 
-            videos_response = self._retry_on_error(
-                fetch_videos,
-                f"videos.list ({channel.name})"
-            )
+            videos_response = self._retry_on_error(fetch_videos, f"videos.list ({channel.name})")
 
             # Step 4: liveBroadcastContent='live'の動画を探す
-            for video in videos_response.get('items', []):
-                snippet = video['snippet']
-                live_broadcast_content = snippet.get('liveBroadcastContent', 'none')
+            for video in videos_response.get("items", []):
+                snippet = video["snippet"]
+                live_broadcast_content = snippet.get("liveBroadcastContent", "none")
 
-                if live_broadcast_content == 'live':
+                if live_broadcast_content == "live":
                     # 配信中の動画を発見
-                    video_id = video['id']
+                    video_id = video["id"]
 
                     # liveStreamingDetailsから実際の開始時刻を取得
-                    live_details = video.get('liveStreamingDetails', {})
-                    actual_start_time = live_details.get('actualStartTime')
+                    live_details = video.get("liveStreamingDetails", {})
+                    actual_start_time = live_details.get("actualStartTime")
 
                     if actual_start_time:
-                        started_at = datetime.fromisoformat(actual_start_time.replace('Z', '+00:00'))
+                        started_at = datetime.fromisoformat(
+                            actual_start_time.replace("Z", "+00:00")
+                        )
                     else:
                         # フォールバック: 公開日時を使用
-                        started_at = datetime.fromisoformat(snippet['publishedAt'].replace('Z', '+00:00'))
+                        started_at = datetime.fromisoformat(
+                            snippet["publishedAt"].replace("Z", "+00:00")
+                        )
 
                     stream = Stream(
                         video_id=video_id,
-                        title=snippet['title'],
-                        thumbnail_url=snippet['thumbnails']['high']['url'],
+                        title=snippet["title"],
+                        thumbnail_url=snippet["thumbnails"]["high"]["url"],
                         started_at=started_at,
-                        status=StreamStatus.LIVE
+                        status=StreamStatus.LIVE,
                     )
 
                     logger.debug(f"配信中: {channel.name} - {stream.title}")
