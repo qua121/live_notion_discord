@@ -5,6 +5,8 @@
 
 実行方法:
     pytest tests/integration/test_youtube_stream_repository.py -v -o addopts="" -m integration
+
+注意: このテストはYouTube APIキーが必要です
 """
 
 import os
