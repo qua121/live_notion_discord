@@ -146,7 +146,8 @@ class TestYouTubeStreamRepository:
 if __name__ == "__main__":
     # 直接実行時のヘルプ
     print("統合テストの実行方法:")
-    print(
+    cmd = (
         'pytest tests/integration/test_youtube_stream_repository.py -v -o addopts="" -m integration'
     )
+    print(cmd)
     print("\n注意: このテストは実際のYouTube APIを使用し、クォータを消費します")
