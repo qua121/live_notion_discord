@@ -147,7 +147,7 @@ addopts = [
 ]
 markers = [
     "unit: Unit tests",
-    "integration: Integration tests",
+    "integration: Integration tests (requires API key, manual run only)",
     "slow: Slow running tests"
 ]
 

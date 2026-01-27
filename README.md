@@ -450,14 +450,26 @@ pip install -r requirements-dev.txt
 ### テストの実行
 
 ```bash
-# 全テストを実行
-pytest
+# ユニットテストを実行
+pytest tests/unit/ -v
+
+# 統合テスト（実際のYouTube APIを使用）
+# 事前に .env に TEST_CHANNEL_ID を設定してください
+pytest tests/integration/ -v -m integration
 
 # カバレッジ付き
-pytest --cov=. --cov-report=html
+pytest tests/unit/ --cov=. --cov-report=html
 
 # 特定のテストのみ
 pytest tests/unit/test_entities.py
+```
+
+**統合テストの実行には環境変数が必要です:**
+
+```env
+# config/.env に追加
+TEST_CHANNEL_ID=UCxxxxxxxxxxxxxxxxxxxxxx
+TEST_CHANNEL_NAME=Test Channel Name
 ```
 
 ### コードフォーマット

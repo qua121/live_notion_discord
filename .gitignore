@@ -25,3 +25,6 @@ logs/*.log
 .idea/
 *.swp
 *.swo
+
+# Claude Code
+.claude/
