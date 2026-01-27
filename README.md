@@ -4,8 +4,10 @@
 [![Python Version](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![Code Style: Black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Architecture: Clean](https://img.shields.io/badge/architecture-clean-green.svg)](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
+[![API Cost](https://img.shields.io/badge/API%20cost-98%25%20reduced-brightgreen.svg)](https://developers.google.com/youtube/v3/getting-started#quota)
 
 YouTube配信の開始を自動検知してDiscordに通知するPythonアプリケーションです。
+**YouTube API使用量を98%削減**した超低コスト設計で、1分間隔の高頻度チェックが可能。
 クリーンアーキテクチャに準拠した保守性の高い設計で、VTuberや配信者のファンコミュニティに最適です。
 
 ---
@@ -29,13 +31,17 @@ YouTube配信の開始を自動検知してDiscordに通知するPythonアプリ
 
 ## 特徴
 
+- ✅ **超低コスト運用**: YouTube API使用量を98%削減（100 units → 2 units/回）
+- ✅ **高頻度チェック**: 1分間隔の監視でも1日2,880 units（無料枠の30%未満）
 - ✅ **複数チャンネル同時監視**: 複数のYouTubeチャンネルを同時に監視可能
+- ✅ **事前配信枠対応**: 週初めに複数配信枠を作成するケースにも対応
+- ✅ **リトライ機能**: 一時的なネットワークエラーに自動対応（指数バックオフ）
 - ✅ **リッチな通知**: Discord Webhookで埋め込み（Embed）形式の美しい通知を送信
 - ✅ **重複通知防止**: 配信状態を永続化し、同じ配信の重複通知を防止
 - ✅ **クリーンアーキテクチャ**: 保守性・拡張性・テスタビリティを重視した設計
 - ✅ **詳細なログ**: ファイル＆コンソールに詳細なログを出力
 - ✅ **カスタマイズ可能**: チェック間隔、メンション、通知色などを柔軟に設定
-- ✅ **テストコード完備**: ユニットテストで品質を保証
+- ✅ **テストコード完備**: ユニットテスト + 統合テストで品質を保証
 
 ---
 
@@ -284,6 +290,37 @@ sudo systemctl status youtube-monitor
 
 ---
 
+## API最適化について
+
+### コスト削減の仕組み
+
+本アプリケーションは**YouTube Data API v3のクォータを98%削減**する独自実装を採用しています。
+
+#### 従来方式（多くのボットが使用）
+```
+search.list(eventType='live')
+→ 1回のチェックで100 units消費
+→ 1分間隔 × 24時間 = 144,000 units/日（無料枠を大幅超過）
+```
+
+#### 本アプリの最適化方式
+```
+1. playlistItems.list（アップロード済み動画の最新20件取得）→ 1 unit
+2. videos.list（一括取得してlive判定）→ 1 unit
+→ 1回のチェックで2 units消費
+→ 1分間隔 × 24時間 = 2,880 units/日（無料枠の30%未満）
+```
+
+#### メリット
+- ✅ **1分間隔でも余裕**: 無料枠内で高頻度チェック可能
+- ✅ **複数チャンネル対応**: 3チャンネルまで1分間隔で監視可能
+- ✅ **事前配信枠に対応**: 週初めに7個の配信枠を作成しても検知可能
+- ✅ **より正確な開始時刻**: liveStreamingDetails.actualStartTimeを使用
+
+詳細は公式ドキュメント「[クォータの節約](https://developers.google.com/youtube/v3/getting-started#quota)」を参照。
+
+---
+
 ## アーキテクチャ
 
 このプロジェクトは**クリーンアーキテクチャ**に準拠して設計されています。
@@ -366,13 +403,14 @@ live-stream-discord-bot/
 
 **詳細**:
 - 無料枠: 1日10,000クォータ
-- `search.list` は1回100クォータ消費
-- 1分間隔で24時間監視すると、1チャンネルあたり 1440回 × 100 = 144,000クォータ必要
+- 本アプリは**1回のチェックで2クォータのみ消費**（最適化済み）
+- 1分間隔で24時間監視: 1,440回 × 2 = 2,880クォータ（無料枠の30%未満）
+- デフォルト設定（1分間隔）なら余裕で運用可能
 
-**解決策**:
-1. `check_interval` を増やす（例: 300秒 = 5分間隔）
-2. 監視チャンネル数を減らす
-3. Google Cloud Consoleでクォータ上限を確認
+**解決策**（万が一超過した場合）:
+1. 監視チャンネル数を確認（3チャンネル以下を推奨）
+2. Google Cloud Consoleでクォータ使用状況を確認
+3. 他のアプリケーションと同じAPIキーを共有していないか確認
 
 ### Discord通知が届かない
 
@@ -424,8 +462,9 @@ live-stream-discord-bot/
 
 ### Q5: API制限を気にせず使えますか？
 
-YouTube Data API v3には無料枠制限があります。
-監視間隔を5分以上に設定することを推奨します。
+はい、**ほぼ気にせず使えます**。
+本アプリは超低コスト設計で、1分間隔でも1日2,880クォータ（無料枠10,000の30%未満）です。
+3チャンネルまでなら余裕で24時間監視可能です。
 
 ### Q6: Windowsで動作しますか？
 
