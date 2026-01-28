@@ -19,6 +19,7 @@ from domain.repositories.notification_gateway import NotificationGateway
 from domain.repositories.state_repository import StateRepository
 from application.services.stream_change_detector import StreamChangeDetector
 from application.dto.stream_state_dto import StreamStateDto
+from infrastructure.youtube.youtube_stream_repository import QuotaExceededError
 
 logger = logging.getLogger(__name__)
 
@@ -47,12 +48,18 @@ class MonitorStreamsUseCase:
 
         Args:
             channels: 監視対象のチャンネルリスト
+
+        Raises:
+            QuotaExceededError: YouTube APIクォータ超過時
         """
         logger.info(f"監視開始: {len(channels)}チャンネル")
 
         for channel in channels:
             try:
                 self._check_channel(channel)
+            except QuotaExceededError:
+                # クォータ超過エラーは上位レイヤーで処理するため再送出
+                raise
             except Exception as e:
                 logger.error(f"チャンネル {channel.name} の監視中にエラー: {e}", exc_info=True)
 

@@ -10,7 +10,7 @@ StreamRepositoryインターフェースの具象実装
 from typing import Optional, List, Callable, TypeVar
 import logging
 import time
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
@@ -24,6 +24,12 @@ logger = logging.getLogger(__name__)
 
 class RepositoryError(Exception):
     """リポジトリエラー"""
+
+    pass
+
+
+class QuotaExceededError(Exception):
+    """YouTube APIクォータ超過エラー"""
 
     pass
 
@@ -49,6 +55,31 @@ class YouTubeStreamRepository(StreamRepository):
         self._api_key = api_key
         self._youtube = build("youtube", "v3", developerKey=api_key)
 
+    @staticmethod
+    def _calculate_wait_until_jst_18() -> int:
+        """
+        JST 18:00までの待機時間（秒）を計算
+
+        Returns:
+            JST 18:00までの秒数
+        """
+        # 現在のJST時刻を取得
+        jst = timezone(timedelta(hours=9))
+        now_jst = datetime.now(jst)
+
+        # 今日のJST 18:00
+        today_18_jst = now_jst.replace(hour=18, minute=0, second=0, microsecond=0)
+
+        # 既に18:00を過ぎている場合は明日の18:00
+        if now_jst >= today_18_jst:
+            reset_time = today_18_jst + timedelta(days=1)
+        else:
+            reset_time = today_18_jst
+
+        # 待機時間を計算
+        wait_seconds = int((reset_time - now_jst).total_seconds())
+        return wait_seconds
+
     def _retry_on_error(self, func: Callable[[], T], operation_name: str) -> T:
         """
         エラー時に指数バックオフでリトライする
@@ -61,7 +92,8 @@ class YouTubeStreamRepository(StreamRepository):
             関数の実行結果
 
         Raises:
-            RepositoryError: リトライ回数を超えた場合
+            QuotaExceededError: クォータ超過エラーの場合
+            RepositoryError: その他のエラーでリトライ回数を超えた場合
         """
         last_error = None
 
@@ -69,8 +101,26 @@ class YouTubeStreamRepository(StreamRepository):
             try:
                 return func()
             except HttpError as e:
-                # 403 (quota/permission) や 400 (bad request) はリトライしない
-                if e.resp.status in [400, 403, 404]:
+                # クォータ超過エラーをチェック
+                if e.resp.status == 403:
+                    error_details = e.error_details if hasattr(e, "error_details") else []
+                    for error in error_details:
+                        if error.get("reason") == "quotaExceeded":
+                            # クォータ超過エラー
+                            wait_seconds = self._calculate_wait_until_jst_18()
+                            logger.error(
+                                f"YouTube APIクォータ超過を検出しました。"
+                                f"JST 18:00まで待機します（約{wait_seconds // 3600}時間{(wait_seconds % 3600) // 60}分）"
+                            )
+                            raise QuotaExceededError(
+                                f"クォータ超過。JST 18:00まで{wait_seconds}秒待機が必要です"
+                            )
+
+                    # クォータ以外の403エラー（権限エラーなど）
+                    raise RepositoryError(f"YouTube API エラー ({operation_name}): {e}") from e
+
+                # 400 (bad request) や 404 はリトライしない
+                if e.resp.status in [400, 404]:
                     raise RepositoryError(f"YouTube API エラー ({operation_name}): {e}") from e
 
                 # 500番台エラーはリトライ対象
@@ -197,6 +247,10 @@ class YouTubeStreamRepository(StreamRepository):
             # 配信中の動画がない
             logger.debug(f"配信なし: {channel.name}")
             return None
+
+        except QuotaExceededError:
+            # クォータ超過エラーはそのまま再送出
+            raise
 
         except RepositoryError:
             # _retry_on_error から投げられたエラーはそのまま再送出
