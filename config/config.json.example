@@ -1,9 +1,78 @@
 {
   "check_interval": 300,
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // チャンネル設定
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // 監視対象のYouTubeチャンネルを設定します。
+  //
+  // 【チャンネルの追加方法】
+  // 1. YouTubeチャンネルページのURLから「UC」で始まるチャンネルIDを取得
+  //    例: https://www.youtube.com/@username → チャンネルページで右クリック「ソースを表示」
+  //        → "channelId":"UCxxxxxx..." を探す
+  //
+  // 2. 以下のフォーマットで channels 配列に追加:
+  //    {
+  //      "id": "UCxxxxxxxxxxxxxxxxxxxxxx",     // チャンネルID (必須)
+  //      "name": "配信者名",                    // 表示用の名前 (任意)
+  //      "webhooks": [...]                      // 通知先Webhook (下記参照)
+  //    }
+  //
+  // 3. 複数チャンネルを監視する場合はカンマ区切りで追加:
+  //    "channels": [
+  //      { "id": "UC111...", "name": "配信者A", "webhooks": [...] },
+  //      { "id": "UC222...", "name": "配信者B", "webhooks": [...] },
+  //      { "id": "UC333...", "name": "配信者C", "webhooks": [...] }
+  //    ]
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
   "channels": [
     {
       "id": "UCxxxxxxxxxxxxxxxxxxxxxx",
       "name": "配信者名",
+
+      // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      // Webhook設定
+      // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      // Discord通知の送信先Webhookを設定します。
+      //
+      // 【Webhookの取得方法】
+      // 1. Discordサーバーの通知先チャンネルを開く
+      // 2. チャンネル設定 → 連携サービス → ウェブフック → 新しいウェブフック
+      // 3. 「ウェブフックURLをコピー」をクリック
+      //
+      // 【Webhookの追加方法】
+      // - 単一Webhook:
+      //   "webhooks": [
+      //     {
+      //       "url": "https://discord.com/api/webhooks/123.../abc...",
+      //       "mention": "@everyone"
+      //     }
+      //   ]
+      //
+      // - 複数Webhook（異なるチャンネルに同時通知）:
+      //   "webhooks": [
+      //     {
+      //       "url": "https://discord.com/api/webhooks/111.../aaa...",
+      //       "mention": "@everyone"
+      //     },
+      //     {
+      //       "url": "https://discord.com/api/webhooks/222.../bbb...",
+      //       "mention": "<@&1234567890>"
+      //     },
+      //     {
+      //       "url": "https://discord.com/api/webhooks/333.../ccc...",
+      //       "mention": ""
+      //     }
+      //   ]
+      //
+      // 【メンション設定】
+      // - @everyone: 全員にメンション
+      // - <@&ロールID>: 特定ロールにメンション
+      //   ※ロールIDの取得: Discord開発者モードON → ロールを右クリック → IDをコピー
+      // - "": メンションなし
+      // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
       "webhooks": [
         {
           "url": "https://discord.com/api/webhooks/YOUR_WEBHOOK_ID/YOUR_WEBHOOK_TOKEN",
@@ -12,10 +81,15 @@
       ]
     }
   ],
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // 通知設定
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   "notification": {
-    "show_thumbnail": true,
-    "color": 16711680,
-    "include_end_notification": false
+    "show_thumbnail": true,              // サムネイル画像を表示
+    "color": 16711680,                   // 埋め込みの色 (10進数カラーコード、赤=16711680)
+    "include_end_notification": false    // 配信終了通知も送信するか
   },
-  "log_level": "INFO"
+
+  "log_level": "INFO"  // ログレベル: DEBUG, INFO, WARNING, ERROR
 }
