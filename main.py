@@ -38,9 +38,7 @@ def main():
 
         # 3. Infrastructure層のインスタンス生成（具象実装）
         stream_repository = YouTubeStreamRepository(settings.youtube_api_key)
-        notification_gateway = DiscordNotificationGateway(
-            settings.discord_webhook_url, settings.notification_color
-        )
+        notification_gateway = DiscordNotificationGateway(color=settings.notification_color)
         state_repository = JsonStateRepository("data/state.json")
 
         # 4. Application層のサービス生成

@@ -13,6 +13,7 @@ from domain.entities.stream import Stream
 from domain.entities.channel import Channel
 from domain.value_objects.channel_id import ChannelId
 from domain.value_objects.stream_status import StreamStatus
+from domain.value_objects.webhook_config import WebhookConfig
 
 
 def main():
@@ -33,13 +34,14 @@ def main():
     print(f"\n[INFO] Webhook URL: {webhook_url[:50]}...")
 
     # 通知ゲートウェイ作成
-    gateway = DiscordNotificationGateway(webhook_url, color=16711680)
+    gateway = DiscordNotificationGateway(color=16711680)
 
     # テスト用のチャンネルとストリーム
+    test_webhook = WebhookConfig(url=webhook_url, mention="@everyone")
     test_channel = Channel(
         id=ChannelId("UC1234567890123456789012"),
         name="テストチャンネル",
-        mention="@everyone",
+        webhooks=[test_webhook],
     )
 
     test_stream = Stream(

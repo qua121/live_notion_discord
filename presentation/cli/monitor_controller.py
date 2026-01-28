@@ -6,7 +6,9 @@
 import logging
 import time
 import signal
+from datetime import datetime
 from typing import List
+import pytz
 
 from domain.entities.channel import Channel
 from application.use_cases.monitor_streams_use_case import MonitorStreamsUseCase
@@ -43,22 +45,51 @@ class MonitorController:
         logger.info("=" * 60)
         logger.info("YouTube配信監視システム起動")
         logger.info(f"監視チャンネル数: {len(self._channels)}")
-        logger.info(f"チェック間隔: {self._check_interval}秒")
+        logger.info(f"チェック間隔: {self._check_interval}秒 (5分)")
         logger.info("=" * 60)
 
         for channel in self._channels:
-            logger.info(f"  - {channel.name} ({channel.id})")
+            webhook_count = len(channel.webhooks)
+            logger.info(f"  - {channel.name} ({channel.id}) - Webhook数: {webhook_count}")
 
         logger.info("=" * 60)
         logger.info("監視開始（Ctrl+Cで終了）")
 
+        # 初回は即座にチェック
+        first_check = True
+
         # 監視ループ
         while self._running:
             try:
+                # 現在時刻（JST）を取得
+                jst = pytz.timezone("Asia/Tokyo")
+                now_jst = datetime.now(jst)
+                logger.info(f"チェック実行: {now_jst.strftime('%Y-%m-%d %H:%M:%S JST')}")
+
                 self._use_case.execute(self._channels)
 
                 if self._running:  # 終了フラグチェック
-                    time.sleep(self._check_interval)
+                    # 次の5の倍数まで待機
+                    wait_seconds = self._calculate_wait_until_next_5min()
+
+                    # 次のチェック時刻を計算（表示用）
+                    next_time = datetime.now(jst).replace(second=0, microsecond=0)
+                    minutes_now = next_time.minute
+                    next_5min = ((minutes_now // 5) + 1) * 5
+                    if next_5min >= 60:
+                        next_time = next_time.replace(hour=(next_time.hour + 1) % 24, minute=0)
+                    else:
+                        next_time = next_time.replace(minute=next_5min)
+
+                    logger.info(
+                        f"次回チェックまで {wait_seconds}秒 待機 "
+                        f"(次回: {next_time.strftime('%H:%M:%S')} JST)"
+                    )
+
+                    if first_check:
+                        first_check = False
+
+                    time.sleep(wait_seconds)
 
             except QuotaExceededError as e:
                 # クォータ超過エラー: JST 18:00まで待機
@@ -123,6 +154,40 @@ class MonitorController:
                 hours = remaining // 3600
                 minutes = (remaining % 3600) // 60
                 logger.info(f"残り待機時間: 約{hours}時間{minutes}分")
+
+    def _calculate_wait_until_next_5min(self) -> int:
+        """
+        次の5の倍数の分（JST基準）まで何秒待つかを計算
+
+        例:
+        - 現在時刻が14:23:45の場合 -> 14:25:00まで = 75秒
+        - 現在時刻が14:25:00の場合 -> 14:30:00まで = 300秒
+        - 現在時刻が14:28:30の場合 -> 14:30:00まで = 90秒
+
+        Returns:
+            次の5分の倍数まで何秒待つか
+        """
+        jst = pytz.timezone("Asia/Tokyo")
+        now_jst = datetime.now(jst)
+
+        # 現在の分と秒
+        current_minute = now_jst.minute
+        current_second = now_jst.second
+
+        # 次の5の倍数の分を計算
+        next_5min = ((current_minute // 5) + 1) * 5
+
+        # 次の5分の倍数までの秒数を計算
+        if next_5min >= 60:
+            # 次の時間に繰り上がる場合
+            minutes_to_wait = 60 - current_minute
+            seconds_to_wait = minutes_to_wait * 60 - current_second
+        else:
+            # 同じ時間内の場合
+            minutes_to_wait = next_5min - current_minute
+            seconds_to_wait = minutes_to_wait * 60 - current_second
+
+        return seconds_to_wait
 
     def _handle_shutdown(self, signum, frame):
         """シャットダウンハンドラー"""

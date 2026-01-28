@@ -7,6 +7,7 @@ from domain.entities.channel import Channel
 from domain.entities.stream import Stream
 from domain.value_objects.channel_id import ChannelId
 from domain.value_objects.stream_status import StreamStatus
+from domain.value_objects.webhook_config import WebhookConfig
 
 
 class TestChannelId:
@@ -45,31 +46,102 @@ class TestChannel:
 
     def test_create_channel(self):
         """正常にChannelを作成できる"""
+        webhooks = [
+            WebhookConfig(
+                url="https://discord.com/api/webhooks/123456789/abcdefg",
+                mention="@everyone"
+            )
+        ]
         channel = Channel(
-            id=ChannelId("UC1234567890123456789012"), name="テストチャンネル", mention="@everyone"
+            id=ChannelId("UC1234567890123456789012"),
+            name="テストチャンネル",
+            webhooks=webhooks
         )
         assert channel.name == "テストチャンネル"
-        assert channel.mention == "@everyone"
+        assert len(channel.webhooks) == 1
+        assert channel.webhooks[0].mention == "@everyone"
+
+    def test_create_channel_with_multiple_webhooks(self):
+        """複数のWebhookでChannelを作成できる"""
+        webhooks = [
+            WebhookConfig(
+                url="https://discord.com/api/webhooks/111111111/aaa",
+                mention="@everyone"
+            ),
+            WebhookConfig(
+                url="https://discord.com/api/webhooks/222222222/bbb",
+                mention="<@&1234567890>"
+            )
+        ]
+        channel = Channel(
+            id=ChannelId("UC1234567890123456789012"),
+            name="テストチャンネル",
+            webhooks=webhooks
+        )
+        assert len(channel.webhooks) == 2
+        assert channel.webhooks[0].url == "https://discord.com/api/webhooks/111111111/aaa"
+        assert channel.webhooks[1].url == "https://discord.com/api/webhooks/222222222/bbb"
 
     def test_channel_empty_name(self):
         """チャンネル名が空の場合、ValueErrorが発生"""
+        webhooks = [
+            WebhookConfig(
+                url="https://discord.com/api/webhooks/123456789/abcdefg",
+                mention="@everyone"
+            )
+        ]
         with pytest.raises(ValueError, match="チャンネル名は空にできません"):
-            Channel(id=ChannelId("UC1234567890123456789012"), name="", mention="@everyone")
+            Channel(
+                id=ChannelId("UC1234567890123456789012"),
+                name="",
+                webhooks=webhooks
+            )
+
+    def test_channel_empty_webhooks(self):
+        """Webhooksが空の場合、ValueErrorが発生"""
+        with pytest.raises(ValueError, match="最低1つのWebhook設定が必要です"):
+            Channel(
+                id=ChannelId("UC1234567890123456789012"),
+                name="テストチャンネル",
+                webhooks=[]
+            )
 
     def test_channel_equality(self):
         """同じIDのChannelは等しい"""
         channel_id = ChannelId("UC1234567890123456789012")
-        channel1 = Channel(id=channel_id, name="チャンネル1", mention="@everyone")
-        channel2 = Channel(id=channel_id, name="チャンネル2", mention="@here")
+        webhooks1 = [
+            WebhookConfig(
+                url="https://discord.com/api/webhooks/123456789/abcdefg",
+                mention="@everyone"
+            )
+        ]
+        webhooks2 = [
+            WebhookConfig(
+                url="https://discord.com/api/webhooks/987654321/xyz",
+                mention="@here"
+            )
+        ]
+        channel1 = Channel(id=channel_id, name="チャンネル1", webhooks=webhooks1)
+        channel2 = Channel(id=channel_id, name="チャンネル2", webhooks=webhooks2)
         assert channel1 == channel2
 
     def test_channel_inequality(self):
         """異なるIDのChannelは等しくない"""
+        webhooks = [
+            WebhookConfig(
+                url="https://discord.com/api/webhooks/123456789/abcdefg",
+                mention="@everyone"
+            )
+        ]
         channel1 = Channel(
-            id=ChannelId("UC1234567890123456789012"), name="チャンネル1", mention="@everyone"
+            id=ChannelId("UC1234567890123456789012"),
+            name="チャンネル1",
+            webhooks=webhooks
         )
         channel2 = Channel(
-            id=ChannelId("UC9876543210987654321098"), name="チャンネル2", mention="@everyone"
+            id=ChannelId("UC9876543210987654321098"),
+            name="チャンネル2",
+            webhooks=webhooks
         )
         assert channel1 != channel2
 
