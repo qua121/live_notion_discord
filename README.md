@@ -235,6 +235,131 @@ https://www.youtube.com/channel/UCxxxxxxxxxxxxxxxxxxxxxx
 
 ---
 
+## 設定形式のマイグレーション（v1.2.0以降）
+
+v1.2.0から、より便利な**Webhook中心設定形式**をサポートしました。従来の形式も引き続き使用可能です。
+
+### 新形式（推奨）: Webhook中心設定
+
+1つのWebhookで複数チャンネルを監視する場合に便利です。
+
+#### パターン1: 複数チャンネルを同じWebhookで監視
+
+**旧形式（v1.1.0以前）:**
+```json
+{
+  "channels": [
+    {"id": "UCxxx111...", "name": "配信者A", "webhooks": [{"url": "https://...", "mention": "@everyone"}]},
+    {"id": "UCxxx222...", "name": "配信者B", "webhooks": [{"url": "https://...", "mention": "@everyone"}]},
+    {"id": "UCxxx333...", "name": "配信者C", "webhooks": [{"url": "https://...", "mention": "@everyone"}]}
+  ]
+}
+```
+
+**新形式（v1.2.0以降）:**
+```json
+{
+  "webhooks": [
+    {
+      "name": "メインサーバー",
+      "url": "https://...",
+      "mention": "@everyone",
+      "channels": ["UCxxx111...", "UCxxx222...", "UCxxx333..."]
+    }
+  ],
+  "channels": [
+    {"id": "UCxxx111...", "name": "配信者A"},
+    {"id": "UCxxx222...", "name": "配信者B"},
+    {"id": "UCxxx333...", "name": "配信者C"}
+  ]
+}
+```
+
+#### パターン2: チャンネルごとに異なるWebhookを使用
+
+```json
+{
+  "webhooks": [
+    {
+      "name": "メインサーバー",
+      "url": "https://discord.com/api/webhooks/111/aaa",
+      "mention": "@everyone",
+      "channels": ["UCxxx111...", "UCxxx222..."]
+    },
+    {
+      "name": "サブサーバー",
+      "url": "https://discord.com/api/webhooks/222/bbb",
+      "mention": "<@&1234567890>",
+      "channels": ["UCxxx333...", "UCxxx444..."]
+    }
+  ],
+  "channels": [
+    {"id": "UCxxx111...", "name": "配信者A"},
+    {"id": "UCxxx222...", "name": "配信者B"},
+    {"id": "UCxxx333...", "name": "配信者C"},
+    {"id": "UCxxx444...", "name": "配信者D"}
+  ]
+}
+```
+
+#### パターン3: 重複監視（同じチャンネルを複数Webhookで通知）
+
+```json
+{
+  "webhooks": [
+    {
+      "name": "メインサーバー",
+      "url": "https://discord.com/api/webhooks/111/aaa",
+      "channels": ["UCxxx111...", "UCxxx222..."]
+    },
+    {
+      "name": "サブサーバー",
+      "url": "https://discord.com/api/webhooks/222/bbb",
+      "channels": ["UCxxx222..."]  // UCxxx222を重複監視
+    }
+  ],
+  "channels": [
+    {"id": "UCxxx111...", "name": "配信者A"},
+    {"id": "UCxxx222...", "name": "配信者B"}  // 2つのWebhookで通知される
+  ]
+}
+```
+
+#### パターン4: 新旧形式の混在
+
+```json
+{
+  "webhooks": [
+    {
+      "name": "メインサーバー",
+      "url": "https://discord.com/api/webhooks/111/aaa",
+      "channels": ["UCxxx111...", "UCxxx222..."]
+    }
+  ],
+  "channels": [
+    {"id": "UCxxx111...", "name": "配信者A"},
+    {
+      "id": "UCxxx222...",
+      "name": "配信者B",
+      "webhooks": [
+        {"url": "https://discord.com/api/webhooks/333/ccc", "mention": "<@&456>"}
+      ]
+    }
+  ]
+}
+```
+
+→ UCxxx111は「メインサーバー」Webhookで監視
+→ UCxxx222は「メインサーバー」+「個別Webhook」の両方で監視（重複監視）
+
+### 注意事項
+
+- **後方互換性**: 旧形式の設定ファイルも引き続き動作します
+- **マイグレーション不要**: すぐに移行する必要はありません
+- **混在可能**: 新形式と旧形式を同時に使用できます
+
+---
+
 ## 使用方法
 
 ### 起動
