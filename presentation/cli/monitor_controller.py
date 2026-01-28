@@ -89,7 +89,9 @@ class MonitorController:
                     if first_check:
                         first_check = False
 
-                    time.sleep(wait_seconds)
+                    self._wait_with_interrupt_check(
+                        wait_seconds, check_interval=1, show_progress=False
+                    )
 
             except QuotaExceededError as e:
                 # クォータ超過エラー: JST 18:00まで待機
@@ -111,11 +113,13 @@ class MonitorController:
                         logger.info("待機完了。監視を再開します...")
                 else:
                     logger.error("待機時間の計算に失敗しました。60秒後にリトライします...")
-                    time.sleep(60)
+                    self._wait_with_interrupt_check(60, check_interval=1, show_progress=False)
 
             except Exception as e:
                 logger.error(f"監視ループでエラー発生: {e}", exc_info=True)
-                time.sleep(self._check_interval)
+                self._wait_with_interrupt_check(
+                    self._check_interval, check_interval=1, show_progress=False
+                )
 
     def _extract_wait_seconds(self, error_message: str) -> int:
         """
@@ -134,23 +138,26 @@ class MonitorController:
             return int(match.group(1))
         return 0
 
-    def _wait_with_interrupt_check(self, total_seconds: int) -> None:
+    def _wait_with_interrupt_check(
+        self, total_seconds: int, check_interval: int = 60, show_progress: bool = True
+    ) -> None:
         """
-        指定秒数待機（1分ごとに終了フラグをチェック）
+        指定秒数待機（定期的に終了フラグをチェック）
 
         Args:
             total_seconds: 待機秒数
+            check_interval: チェック間隔（秒）デフォルト60秒
+            show_progress: 進捗ログを表示するか（長時間待機用）
         """
         remaining = total_seconds
-        check_interval = 60  # 1分ごとにチェック
 
         while remaining > 0 and self._running:
             sleep_time = min(check_interval, remaining)
             time.sleep(sleep_time)
             remaining -= sleep_time
 
-            # 進捗をログ出力（10分ごと）
-            if remaining > 0 and remaining % 600 == 0:
+            # 進捗をログ出力（10分ごと、show_progressがTrueの場合のみ）
+            if show_progress and remaining > 0 and remaining % 600 == 0:
                 hours = remaining // 3600
                 minutes = (remaining % 3600) // 60
                 logger.info(f"残り待機時間: 約{hours}時間{minutes}分")
