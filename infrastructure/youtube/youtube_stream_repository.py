@@ -204,7 +204,7 @@ class YouTubeStreamRepository(StreamRepository):
             # Step 3: videos.listで一括取得 (1 unit) - リトライ付き
             def fetch_videos():
                 videos_request = self._youtube.videos().list(
-                    part="snippet,liveStreamingDetails", id=",".join(video_ids)
+                    part="snippet,liveStreamingDetails,status", id=",".join(video_ids)
                 )
                 return videos_request.execute()
 
@@ -213,11 +213,25 @@ class YouTubeStreamRepository(StreamRepository):
             # Step 4: liveBroadcastContent='live'の動画を探す
             for video in videos_response.get("items", []):
                 snippet = video["snippet"]
+                status = video.get("status", {})
                 live_broadcast_content = snippet.get("liveBroadcastContent", "none")
 
                 if live_broadcast_content == "live":
                     # 配信中の動画を発見
                     video_id = video["id"]
+                    title = snippet.get("title", "")
+                    privacy_status = status.get("privacyStatus", "unknown")
+                    made_for_kids = status.get("madeForKids", False)
+
+                    # デバッグログ: プライバシー情報を出力
+                    logger.info(
+                        f"配信検出: {title} (ID: {video_id}) - "
+                        f"Privacy: {privacy_status}, MadeForKids: {made_for_kids}"
+                    )
+
+                    # TODO: メンバー限定配信の判定ロジック（Phase 2で検討）
+                    # if privacy_status == "unlisted" or ... :
+                    #     logger.warning(f"メンバー限定配信の可能性: {title}")
 
                     # liveStreamingDetailsから実際の開始時刻を取得
                     live_details = video.get("liveStreamingDetails", {})
@@ -235,7 +249,7 @@ class YouTubeStreamRepository(StreamRepository):
 
                     stream = Stream(
                         video_id=video_id,
-                        title=snippet["title"],
+                        title=title,
                         thumbnail_url=snippet["thumbnails"]["high"]["url"],
                         started_at=started_at,
                         status=StreamStatus.LIVE,
